@@ -1,33 +1,35 @@
 import React, { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, ScrollView } from "react-native";
 import SearchBar from "../components/SearchBar";
-import yelp from "../api/yelp";
-
-const limit = 50;
-const location = "san jose";
+import useResults from "../hooks/useResults";
+import ResultsList from "../components/ResultsList";
 
 const SearchScreen = () => {
+  const resultLists = [
+    { title: "Cost Effective", type: "$" },
+    { title: "Bit Pricer", type: "$$" },
+    { title: "Big Spender", type: "$$$" },
+  ];
   const [term, setTerm] = useState("");
-  const [results, setResults] = useState([]);
+  const [onSubmit, results, errorMessage] = useResults();
 
-  const onSubmit = async () => {
-    try {
-      const config = { params: { term, limit, location } };
-      const response = await yelp.get("/search", config);
-      setResults(response.data.businesses);
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  const filterResults = (price) => results.filter((r) => r.price === price);
 
   return (
-    <View>
+    <View style={{ flex: 1 }}>
       <SearchBar
         term={term}
         onChangeText={(text) => setTerm(text)}
-        onSubmit={onSubmit}
+        onSubmit={() => onSubmit(term)}
       />
-      <Text>{results.map((b) => b.name + "\n")}</Text>
+
+      {errorMessage ? <Text>{errorMessage}</Text> : null}
+
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {resultLists.map(({ type, title }) => (
+          <ResultsList key={type} results={filterResults(type)} title={title} />
+        ))}
+      </ScrollView>
     </View>
   );
 };
